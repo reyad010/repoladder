@@ -1,35 +1,41 @@
 # DeepIvy: TEE-GPU Hybrid DNN Inference for Model Protection
 
-**Author:** Reyad Islam
-
-Source code, NAS search scripts, and end-to-end inference benchmarks for the ACM CCS 2026 paper on backend-transparent TEE-GPU hybrid DNN inference.
+Source code, NAS search scripts, and end-to-end inference benchmarks for the
+ACM CCS 2026 paper on backend-transparent TEE-GPU hybrid DNN inference.
 
 ---
 
 ## Repository Structure
 
 ```
-repoladder/
+CCS_Artifacts/
 ├── artifact1_nas/               # Artifact 1: NAS layer-reduction algorithm
 │   ├── search.py                # Genetic NAS search driver
-│   ├── plot_reduction.py        # Post-search figure generation script
-│   ├── Makefile                 # Local build rules
-│   ├── run.sh                   # Experiment runner
-│   └── results/
-│       └── precomputed/         # Pre-computed results for plotting
+│   ├── plot_reduction.py        # Generates Fig. 10 from NAS results
+│   ├── Makefile                 # No-op (no native sources)
+│   └── run.sh                   # Iterates 3 (model, dataset) pairs
 │
 ├── artifact2_e2e/               # Artifact 2: End-to-end execution framework
 │   ├── backbone.py              # Backbone network (untrusted GPU process)
 │   ├── tee_server.py            # Enclave-side inference server
-│   ├── shm_bridge.cpp           # Zero-copy shared-memory transfer layer (C++)
+│   ├── shm_bridge.cpp           # Zero-copy shared-memory transfer (C++)
 │   ├── shmio.py                 # Python wrapper for shared-memory tensors
-│   ├── Makefile                 # Compiles shm_bridge.cpp
-│   ├── run.sh                   # Coordinates two-process launch
-│   └── gramine/                 # Gramine LibOS manifests for SGX enclave
+│   ├── Makefile                 # Builds shm_bridge.so + Gramine SGX manifest
+│   ├── run.sh                   # Per-config two-process launch (one fresh pair per cfg)
+│   └── gramine/                 # Gramine LibOS manifest template (SGX)
 │
-├── configs/                     # YAML configuration files (model + dataset pairs)
-├── results/                     # Collected latency and accuracy outputs
-├── requirements.txt             # Python dependencies
+├── shared/                      # Common dependencies imported by both artifacts
+│   ├── nas/                     # GeneticArchSearchConfig + ArchSearchRunManager
+│   ├── modules/                 # MixedEdge / Reduced{Conv,Linear} layers
+│   ├── models/lst_vgg/          # LST-VGG (paired with GTSRB)
+│   ├── models/lst_resnet/       # LST-ResNet (paired with CIFAR-10)
+│   ├── models/lst_vit/          # LST-ViT (paired with CIFAR-100)
+│   ├── utils/                   # pytorch_utils, model_deploy, transfer channel, ...
+│   └── dataloader.py            # Unified data loader (uses .data/ relative path)
+│
+├── configs/                     # YAML configs per (model, dataset) pair
+├── results/                     # Latency + accuracy outputs (created at runtime)
+├── requirements.txt
 └── README.md
 ```
 
@@ -39,133 +45,168 @@ repoladder/
 
 ### Hardware
 
-- An **Intel SGX2-capable CPU** (e.g., Intel Xeon Ice Lake SP or later)
-- An **NVIDIA CUDA-capable GPU**
-
-The backbone process (GPU) and TEE-side server (SGX enclave) run as co-located processes on the same host and communicate through a POSIX shared memory segment.
+- **Intel SGX2-capable CPU** (e.g., Intel Xeon Ice Lake SP or later) for the
+  default `gpu-tee` mode.  If SGX2 is unavailable, the artifact still runs in
+  `gpu-cpu` mode (the side server runs as a plain CPU process).
+- **NVIDIA CUDA-capable GPU** for the backbone process.
 
 ### Operating System
 
-- Ubuntu 20.04 LTS or Ubuntu 22.04 LTS
-- Linux kernel 5.15 or later
-- Intel SGX in-kernel driver must be installed
-- **Gramine LibOS v1.8** must be installed — see [installation instructions](https://gramine.readthedocs.io/en/stable/installation.html)
+- Ubuntu 20.04 LTS or 22.04 LTS, Linux kernel 5.15+
+- **Gramine LibOS v1.8** (only required for `gpu-tee` mode):
+  https://gramine.readthedocs.io/en/stable/installation.html
 
-### Software Dependencies
+### Software
 
-| Component | Version |
-|-----------|---------|
-| GCC | 11.4 or later |
-| Python | 3.10 or later |
-| PyTorch | 2.x |
-| CUDA | 12.x |
-| Gramine | 1.8 |
+| Component | Version  |
+|-----------|----------|
+| GCC       | 11.4+    |
+| Python    | 3.10+    |
+| PyTorch   | 2.x      |
+| CUDA      | 12.x     |
+| Gramine   | 1.8 (SGX mode only) |
 
-Install all Python dependencies inside a virtual environment:
+### Install Python dependencies
+
+**You don't need to do this manually** — both `run.sh` scripts call
+`shared/setup_envs.sh`, which creates the two virtualenvs the artifacts need
+on first invocation:
+
+- `CCS_Artifacts/my_venv`        — CPU torch wheel (used by `tee_server.py`)
+- `CCS_Artifacts/my_venv_cuda`   — CUDA torch wheel (used by `backbone.py` / `search.py`)
+
+Both venvs install `requirements.txt`. Subsequent runs detect the existing
+venvs and skip setup.
+
+If you want to provision them by hand instead, the equivalent commands are:
 
 ```bash
-pip install -r requirements.txt
+cd CCS_Artifacts
+python3 -m venv my_venv_cuda
+my_venv_cuda/bin/pip install --upgrade pip
+my_venv_cuda/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+my_venv_cuda/bin/pip install -r requirements.txt
+
+python3 -m venv my_venv
+my_venv/bin/pip install --upgrade pip
+my_venv/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+my_venv/bin/pip install -r requirements.txt
 ```
+
+(Override the wheel index by exporting `TORCH_CUDA_INDEX` / `TORCH_CPU_INDEX`
+before running `bash run.sh` if you need a different CUDA version.)
+
+### Datasets
+
+The NAS search reads one batch per (model, dataset) pair to compute the
+NASWOT score. Place the datasets under `artifact1_nas/.data/` (the relative
+path the loader uses):
+
+| Dataset    | Source                                              |
+|------------|-----------------------------------------------------|
+| GTSRB      | `torchvision.datasets.GTSRB` will auto-download     |
+| CIFAR-10   | `torchvision.datasets.CIFAR10` will auto-download   |
+| CIFAR-100  | `torchvision.datasets.CIFAR100` will auto-download  |
+
+The end-to-end latency benchmark (`artifact2_e2e/`) does **not** read any
+dataset — it uses dummy inputs to measure inference latency only.
+
+The ViT backbone needs `vit_base_patch16_224` weights. If
+`artifact{1,2}_*/models/vit_base_patch16_224.pth` is not present, `timm`
+auto-downloads them from HuggingFace on first use.
 
 ---
 
-## Provided Artifacts
+## Reproduce the Results
 
-### Artifact 1: NAS Algorithm
+**Just run the two `run.sh` scripts.** Each one bootstraps the venvs, builds
+`shm_bridge.so` (and the SGX manifest, in `gpu-tee` mode), pre-downloads the
+ViT weights, and launches the two-process pipeline.
 
-Reproduces the layer-reduction figure (Fig. 3 in the paper).
+```bash
+# Artifact 1: NAS search → produces hall_of_fame.json per (model, dataset)
+cd artifact1_nas/
+bash run.sh                # default: gpu-tee
+# python plot_reduction.py # regenerate Fig. 10 from precomputed/NAS results
 
-**Directory:** `artifact1_nas/`
+# Artifact 2: End-to-end TEE-GPU latency → reproduces Tables 1-2 + Fig. 8
+cd ../artifact2_e2e/
+bash run.sh                # default: gpu-tee
+```
 
-| File | Description |
-|------|-------------|
-| `search.py` | Genetic NAS search driver; explores layer-reduction design space per model–dataset pair |
-| `plot_reduction.py` | Generates the figure from collected or pre-computed results |
-| `results/precomputed/` | Pre-computed results; use directly to skip the search |
+> **`artifact1_nas/run.sh` ships in debug mode** so reviewers can finish a full
+> sweep in minutes:
+>
+> ```bash
+> N_GEN=1    # debug mode (paper: 10)
+> NPOP=6     # debug mode (paper: 64)
+> BETA=30
+> ```
+>
+> For paper-quality NAS results, edit `artifact1_nas/run.sh` and bump
+> `N_GEN=10` and `NPOP=64` before running (`BETA=30` is already the paper value).
+> A full search takes hours per (model, dataset) pair.
 
-### Artifact 2: End-to-End Execution Framework
+Both scripts iterate the three (model, dataset) configurations reported in the
+paper:
 
-Reproduces main latency and accuracy results (Tables 1–2 and Fig. 5 in the paper).
+- VGG-16   on GTSRB
+- ResNet-18 on CIFAR-10
+- ViT-Base  on CIFAR-100
 
-**Directory:** `artifact2_e2e/`
+`artifact2_e2e/run.sh` launches a **fresh `tee_server.py` + `backbone.py` pair
+per config**, runs that one config end-to-end, then tears the pair down before
+the next config (running multiple model swaps inside a single SGX enclave can
+trip Gramine's malicious-host detection). `backbone.py --cfg <name>` runs a
+single config; `--configs_file` is still available to replay NAS-discovered
+configs from a JSON list.
 
-| File | Description |
-|------|-------------|
-| `backbone.py` | Backbone network executed on the untrusted GPU |
-| `tee_server.py` | Enclave-side inference server; manages request queuing and shared-memory handshakes |
-| `shm_bridge.cpp` | Zero-copy tensor transfer layer (C++); implements POSIX SHM with spinlock-based atomic producer-consumer protocol |
-| `shmio.py` | Python wrapper; maps SHM pointer as NumPy array and exposes it as a `torch.Tensor` |
-| `gramine/` | Gramine manifests for running `tee_server.py` inside an SGX enclave |
+Each `run.sh` builds `shm_bridge.so` (and the Gramine SGX manifest, in
+`gpu-tee` mode) on first invocation, then launches the two-process pipeline.
+
+### If SGX is not available on your host
+
+Run with the `gpu-cpu` mode — the side server runs as plain Python instead
+of a Gramine SGX enclave; everything else is identical:
+
+```bash
+cd artifact2_e2e/  &&  bash run.sh gpu-cpu
+cd artifact1_nas/  &&  bash run.sh gpu-cpu
+```
+
+`gpu-cpu` is also a useful sanity check before attempting `gpu-tee` (Gramine
+SGX initialisation can take several minutes).
+
+---
+
+## Outputs
+
+| Artifact    | Output path                                | Contents                                      |
+|-------------|--------------------------------------------|-----------------------------------------------|
+| Artifact 1  | `artifact1_nas/results/<model>_<dataset>/` | `search.log`, `tee_server.log`, `hall_of_fame.json` |
+| Artifact 1  | `artifact1_nas/figures/reduced_layer.pdf`  | Fig. 10 (after running `plot_reduction.py`)   |
+| Artifact 2  | `results/<cfg>/backbone.log`               | Per-config latency (ms ± std), one dir per cfg |
+| Artifact 2  | `results/<cfg>/tee_server.log`             | Side-process inference + mask/unmask trace    |
+
+Where `<cfg>` is e.g. `lst.8.vgg.gtsrb`, `lst.8.resnet.cifar10`, `lst.8.vit-base.cifar100`.
 
 ---
 
 ## Compilation
 
-C/C++ sources (`shm_bridge.cpp`) are compiled using the provided `Makefile`. Each artifact subdirectory contains a local `Makefile` for individual compilation.
-
-**Compile Artifact 2 shared-memory bridge:**
+`make` is invoked automatically from `run.sh`; manual invocation:
 
 ```bash
 cd artifact2_e2e/
-make
+make            # compiles shm_bridge.so   (gpu-cpu mode)
+make sgx        # also builds pytorch.manifest.sgx + signs (gpu-tee mode)
+make clean
 ```
 
-**Compile all artifacts from the root:**
+For `gpu-tee`, the SGX manifest defaults `VENV_DIR` and `PYTHON_BIN` to the
+artifact root and the system `python3`. If your venv lives elsewhere, override:
 
 ```bash
-make -C artifact1_nas/
-make -C artifact2_e2e/
+make sgx VENV_DIR=/abs/path/to/my_venv \
+         PYTHON_BIN=/abs/path/to/my_venv/bin/python3
 ```
-
----
-
-## Configuration
-
-Edit the relevant `.yaml` files in `configs/` to specify the model family and dataset. Supported model–dataset pairs match those evaluated in the paper (CNNs and attention-based models).
-
-```bash
-# Example: select ResNet-50 on CIFAR-100
-configs/resnet50_cifar100.yaml
-```
-
----
-
-## Execution
-
-Each artifact directory contains a `run.sh` script that executes the experiment with recommended parameters.
-
-### Artifact 1: NAS Search
-
-```bash
-cd artifact1_nas/
-bash run.sh
-# To skip search and plot from pre-computed results:
-python plot_reduction.py --results results/precomputed/
-```
-
-### Artifact 2: End-to-End Inference
-
-**Start the enclave server first:**
-
-```bash
-cd artifact2_e2e/
-gramine-sgx tee_server.py
-```
-
-Once the enclave prints `[TEE] ready`, launch the GPU backbone in a second terminal:
-
-```bash
-python backbone.py
-```
-
-The `run.sh` script automates this two-process coordination and collects latency and accuracy into `results/`:
-
-```bash
-bash run.sh
-```
-
----
-
-## Results
-
-Output files are written to `results/` in each artifact directory. Latency (ms) and accuracy (%) are logged per model–dataset pair and match the values reported in the paper tables.

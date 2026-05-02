@@ -1,0 +1,69 @@
+# Gramine SGX manifest template for tee_server.py (CCS Artifact 2).
+#
+# Rendered by `make sgx`:
+#   gramine-manifest -Dlog_level=error -Darch_libdir=... \
+#       -Dentrypoint=$(VENV_DIR)/bin/python3 \
+#       -Dvenv_dir=$(VENV_DIR) -Dartifact_root=$(ARTIFACT_ROOT) \
+#       gramine/pytorch.manifest.template > pytorch.manifest
+
+libos.entrypoint = "{{ entrypoint }}"
+loader.log_level = "error"
+loader.insecure__use_cmdline_argv = true
+
+loader.env.LD_LIBRARY_PATH = "/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.HOME = "{{ env.HOME }}"
+loader.env.TMPDIR = "/tmp"
+loader.env.OMP_NUM_THREADS = "8"
+loader.env.PYTHONUNBUFFERED = "1"
+
+fs.mounts = [
+  { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
+  { path = "/lib",                   uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "/usr/lib",               uri = "file:/usr/lib" },
+  { path = "{{ arch_libdir }}",      uri = "file:{{ arch_libdir }}" },
+  { path = "/usr/{{ arch_libdir }}", uri = "file:/usr/{{ arch_libdir }}" },
+
+  # Python environment (must contain torch, numpy, fvcore, psutil, pillow).
+  # Mounting venv_dir recursively covers bin/, lib/python{{ python_ver }}/, etc.
+  { path = "{{ venv_dir }}",                                              uri = "file:{{ venv_dir }}" },
+  { path = "{{ venv_dir }}/bin",                                          uri = "file:{{ venv_dir }}/bin" },
+  { path = "{{ venv_dir }}/lib/python{{ python_ver }}",                   uri = "file:{{ venv_dir }}/lib/python{{ python_ver }}" },
+  { path = "{{ venv_dir }}/lib/python{{ python_ver }}/site-packages",     uri = "file:{{ venv_dir }}/lib/python{{ python_ver }}/site-packages" },
+
+  # CCS Artifacts source tree (artifact2_e2e/ + shared/)
+  { path = "{{ artifact_root }}", uri = "file:{{ artifact_root }}" },
+
+  { path = "/etc/passwd",        uri = "file:/etc/passwd" },
+  { path = "/etc/group",         uri = "file:/etc/group" },
+  { path = "/etc/nsswitch.conf", uri = "file:/etc/nsswitch.conf" },
+
+  { type = "untrusted_shm", path = "/dev/shm", uri = "dev:/dev/shm" },
+  { type = "tmpfs",         path = "/tmp" },
+  { type = "tmpfs",         path = "/var/tmp" },
+]
+
+# ---- SGX configuration ----
+sgx.debug = false
+sgx.edmm_enable = false
+sgx.enclave_size = "64G"
+sgx.max_threads = 64
+sgx.use_exinfo = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+
+sgx.trusted_files = [
+  "file:{{ entrypoint }}",
+  "file:{{ gramine.runtimedir() }}/",
+  "file:/usr/lib/",
+  "file:{{ arch_libdir }}/",
+  "file:/usr/{{ arch_libdir }}/",
+  "file:{{ venv_dir }}/",
+]
+
+# Source files are not measured at sign time so reviewers can edit them
+# without re-signing the manifest. Anything inside artifact_root is allowed.
+sgx.allowed_files = [
+  "file:{{ artifact_root }}/",
+  "file:/etc/passwd",
+  "file:/etc/group",
+  "file:/etc/nsswitch.conf",
+  "file:/sys/devices/system",
+]

@@ -1,0 +1,32 @@
+# ResNet-18 + CIFAR-10  (TSDP-LST)
+# Backbone runs on GPU; NAS-reduced side network runs in TEE/CPU.
+
+model_name: resnet
+dataset: cifar10
+num_classes: 10
+image_size: 64
+
+peft: lst
+opt_type: adam
+init_lr: 0.001
+n_epochs: 30
+train_batch_size: 1024
+test_batch_size: 1024
+weight_decay: 0
+manual_seed: 42
+
+search_space:
+  connection: [empty, regular]
+  side:       [empty, same]
+  reduction_factor: [4, 8, 16, 32]
+
+rf: 8
+reward_beta: 30
+npop: 64
+n_generation: 10
+mutation_sigma: 8
+rf_level: 2
+rf_anchor: follow
+
+test_device: split
+transfer_type: shm
