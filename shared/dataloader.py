@@ -14,6 +14,34 @@ import random
 # from unused_function.lisa import LISA
 import ssl; ssl._create_default_https_context = ssl._create_unverified_context
 
+# CIFAR mirror fallback: cs.toronto.edu has been 503-ing since 2026-05. Try
+# the canonical host first; on failure fall through to a byte-identical
+# Internet Archive snapshot. torchvision's MD5 check runs either way, so the
+# fallback can only succeed if the file is the genuine canonical tarball.
+from torchvision.datasets.utils import download_and_extract_archive as _dl_extract
+def _install_cifar_fallback(cls, urls):
+    def download(self):
+        if self._check_integrity():
+            print("Files already downloaded and verified")
+            return
+        for i, url in enumerate(urls):
+            try:
+                _dl_extract(url, self.root, filename=self.filename, md5=self.tgz_md5)
+                return
+            except Exception as e:
+                if i == len(urls) - 1:
+                    raise
+                print(f"[dataloader] {cls.__name__} download from {url} failed ({e}); trying mirror")
+    cls.download = download
+_install_cifar_fallback(CIFAR10, [
+    "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz",
+    "https://web.archive.org/web/20241225200100id_/https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz",
+])
+_install_cifar_fallback(CIFAR100, [
+    "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz",
+    "https://web.archive.org/web/20241225200100id_/https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz",
+])
+
 NLP_DATASETS = {'sst2', 'mrpc', 'rte', 'cola'}
 
 root_map = {
