@@ -1,0 +1,21 @@
+gpu                  0
+manual_seed          42
+model_name           vgg
+dataset              gtsrb
+rf                   4
+reward_beta          30.0
+cfg                  lst.8.vit-base.cifar100
+configs_file         None
+verbose_trace        False
+batch_sizes          None
+================================================== Config 1: lst.8.vit-base.cifar100 ==================================================
+/home/md043797/PrivLST/CCS_Artifacts/artifact2_e2e/../shared/models/lst_vit/base_model.py:74: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.backbone.load_state_dict(torch.load(_local_ckpt))
+reward beta: 30.0, rf_level: 2, rf_anchor: follow
+[backbone] split fixed mode: 1 thread(s) (same=False)
+[backbone] allowed CPU pool: [24]
+allocate shm tensor dict_keys(['x', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11'])
+[backbone]: final latency: 620.52 ms ± 28.99 ms
+lst.8.vit-base.cifar100 None 620.516716375
+lst.8.vit-base.cifar100: 620.516716375
+backbone final latency: [620.516716375]

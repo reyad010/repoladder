@@ -1,0 +1,10 @@
+cupy is not available
+set threads to 4
+[side] server started; waiting for cfg...
+==================================================[side] cfg 1==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=10
+[side] cfg: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 2==================================================
+[side] server terminated

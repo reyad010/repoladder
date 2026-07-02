@@ -1,0 +1,46 @@
+Gramine is starting. Parsing TOML manifest file, this may take some time...
+-----------------------------------------------------------------------------------------------------------------------
+Gramine detected the following insecure configurations:
+
+  - loader.insecure__use_cmdline_argv = true   (forwarding command-line args from untrusted host to the app)
+  - sgx.allowed_files = [ ... ]                (some files are passed through from untrusted host without verification)
+
+Gramine will continue application execution, but this configuration must not be used in production!
+-----------------------------------------------------------------------------------------------------------------------
+
+cupy is not available
+set threads to 4
+[side] server started; waiting for cfg...
+==================================================[side] cfg 1==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+Emulating a raw syscall instruction. This degrades performance, consider patching your application to use Gramine syscall API.
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 2==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [9, 8, 9, 8, 9, 9, 8, 9, 9, 8, 9, 9, 9, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8, 9, 9, 8, 9, 9, 9, 8, 9, 9, 9, 9, 9, 9, 4]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 3==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 2]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 4==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [7, 7, 6, 7, 7, 7, 6, 7, 7, 6, 6, 7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 7, 7, 7, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 5==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [9, 9, 9, 8, 9, 9, 9, 9, 8, 9, 9, 8, 8, 9, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 4]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 6==================================================
+[side] cfg received: model=resnet, num_class=10, warmup=5, iters=5
+[side] cfg: [3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 2, 2, 3, 2, 3, 3, 3, 3, 3, 3, 1]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 7==================================================
+[side] server terminated

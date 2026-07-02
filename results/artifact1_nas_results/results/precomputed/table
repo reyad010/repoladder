@@ -1,0 +1,13 @@
+data = {
+    'resnet_cifar10': [18, 20, 4, 12],
+    'resnet_gtsrb':   [18, 20, 5, 11],
+    'resnet_svhn':    [18, 20, 5, 15],
+    'vgg_cifar10':    [14, 13, 3, 7],
+    'vgg_gtsrb':      [14, 13, 4, 7],
+    'vgg_svhn':       [14, 13, 5, 7],
+    'vit_cifar100':   [13, 12, 3, 7],
+    'vit_pet':        [13, 12, 3, 4],
+    'llama_cola':     [33, 32, 5, 14],
+    'llama_mrpc':     [33, 32, 5, 11],
+    'llama_rte':      [33, 32, 5, 11],
+}

@@ -1,0 +1,19 @@
+gpu                  0
+manual_seed          42
+model_name           vgg
+dataset              gtsrb
+rf                   4
+reward_beta          30.0
+cfg                  lst.8.resnet.cifar10
+configs_file         None
+verbose_trace        False
+batch_sizes          None
+================================================== Config 1: lst.8.resnet.cifar10 ==================================================
+reward beta: 30.0, rf_level: 2, rf_anchor: follow
+[backbone] split fixed mode: 1 thread(s) (same=False)
+[backbone] allowed CPU pool: [24]
+allocate shm tensor dict_keys(['x', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12', 'f13', 'f14', 'f15', 'f16'])
+[backbone]: final latency: 18.66 ms ± 0.13 ms
+lst.8.resnet.cifar10 None 18.656683375
+lst.8.resnet.cifar10: 18.656683375
+backbone final latency: [18.656683375]

@@ -1,0 +1,35 @@
+cupy is not available
+set threads to 4
+[side] server started; waiting for cfg...
+==================================================[side] cfg 1==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [7, 7, 7, 7, 6, 6, 6, 7, 7, 6, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 7, 7, 6, 7, 7, 3]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 2==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [5, 5, 5, 4, 5, 4, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 4, 5, 5, 5, 2]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 3==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 4==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 5==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 6==================================================
+[side] cfg received: model=vit-base, num_class=100, warmup=5, iters=5
+[side] cfg: [3, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+allocate shm tensor dict_keys([])
+[side] side model ready
+==================================================[side] cfg 7==================================================
+[side] server terminated
